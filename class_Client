@@ -1,0 +1,120 @@
+package Multithreaded;
+//12/2/2015
+//Olga Hollister
+
+import java.io.*;
+import java.net.*;
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
+
+public class Client extends JFrame {
+  // Text field for receiving radius
+  private JTextField jtf = new JTextField();
+  private JTextField jtf1 = new JTextField();
+  private JTextField jtf2 = new JTextField();
+  private JTextField jtf3 = new JTextField();
+
+  // Text area to display contents
+  private JTextArea jta = new JTextArea();
+
+  // IO streams
+  private DataOutputStream toServer;
+  private DataInputStream fromServer;
+
+  public static void main(String[] args) {
+    new Client();
+  }
+
+  public Client() {
+    // Panel p to hold the label and text field
+    JPanel p = new JPanel();
+    p.setLayout(new GridLayout(7,1));
+    
+    p.add(new JLabel("1 send name & phone; 2 request for Phone#"), BorderLayout.WEST);
+    
+    p.add(new JLabel("Command"), BorderLayout.WEST);
+    p.add(jtf, BorderLayout.NORTH);
+    jtf.setHorizontalAlignment(JTextField.LEFT);
+    
+    p.add(new JLabel("Enter Name"), BorderLayout.WEST);
+    p.add(jtf1, BorderLayout.NORTH);
+    jtf1.setHorizontalAlignment(JTextField.LEFT);
+    
+    p.add(new JLabel("Enter Phone"), BorderLayout.WEST);
+    p.add(jtf2, BorderLayout.NORTH);//check!!!!
+    jtf2.setHorizontalAlignment(JTextField.LEFT);
+ 
+
+    setLayout(new BorderLayout());
+    add(p, BorderLayout.NORTH);
+    add(new JScrollPane(jta), BorderLayout.CENTER);
+  
+    jtf.addActionListener(new ButtonListener()); // Register listener
+    jtf1.addActionListener(new ButtonListener()); // Register listener
+    jtf2.addActionListener(new ButtonListener()); // Register listener
+
+
+    setTitle("Client");
+    setSize(500, 300);
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setVisible(true); // It is necessary to show the frame here!
+
+    try {
+      // Create a socket to connect to the server
+      Socket socket = new Socket("localhost", 8000);
+
+      // Create an input stream to receive data from the server
+      fromServer = new DataInputStream(
+        socket.getInputStream());
+
+      // Create an output stream to send data to the server
+      toServer =
+        new DataOutputStream(socket.getOutputStream());
+    }
+    catch (IOException ex) {
+      jta.append(ex.toString() + '\n');
+ 
+    }
+  }
+
+  private class ButtonListener implements ActionListener {
+    public void actionPerformed(ActionEvent e) {
+      try {
+        // Get the name and phone from the text field
+    	int n = Integer.parseInt(jtf.getText().trim());
+        String name = (jtf1.getText().trim());
+        String phone = (jtf2.getText().trim());
+
+        
+         toServer.writeInt(n);
+         toServer.flush();
+
+        // Send the name to the server
+        toServer.writeUTF(name);
+        toServer.flush();//Flushes this data output stream. This forces any buffered output bytes to be written out to the stream.
+        // Send the phone to the server
+        toServer.writeUTF(phone);
+        toServer.flush();
+
+
+        // Get name from the server
+        String nm = fromServer.readUTF();
+        // Get phone from the server
+        String ph = fromServer.readUTF();
+
+
+        // Display to the text area
+        jta.append("Name is : " + nm + "\n");
+
+        jta.append("Phone is : " + ph + "\n");
+
+
+      }
+      catch (IOException ex) {
+        System.err.println(ex);
+      }
+    }
+  }
+}
